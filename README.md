@@ -2,7 +2,7 @@ SpectralTrainFig
 ================
 
 #### Overview
-SpectralTrainFig is a graphical user interface that allows a user to select a folder of [EDF](http://en.wikipedia.org/wiki/European_Data_Format)/XML files to apply [spectral analysis](http://en.wikipedia.org/wiki/Spectral_estimation) to [electroencephlography signals (EEG)](http://en.wikipedia.org/wiki/Electroencephalography). The spectral analysis program includes a spectral threshold artifact detection scheme described in the [literature](http://www.ncbi.nlm.nih.gov/pubmed/16388912). SpectralTrainFig is a user friendly approach to the SpectralAnalysisClass function. The GUI versions allows a user to perform spectral or coherence analysis without having to do any programming. EXCEL and PowerPoint summaries are configured by user defined settings and specified spectral bands. Detail epoch by epoch and subject summaries are provided for both NREM and REM states. Additional details are described below. Output examples can be found in the [release section](https://github.com/DennisDean/SpectralTrainFig/releases).
+SpectralTrainFig is a graphical user interface that allows a user to select a folder of [EDF](http://en.wikipedia.org/wiki/European_Data_Format)/XML files to apply [spectral analysis](http://en.wikipedia.org/wiki/Spectral_estimation) to [electroencephlography signals (EEG)](http://en.wikipedia.org/wiki/Electroencephalography). The spectral analysis program includes a spectral threshold artifact detection scheme described in the [literature](http://www.ncbi.nlm.nih.gov/pubmed/16388912). And a template-subtraction based ECG artifact removal algorithm. SpectralTrainFig is a user friendly approach to the SpectralAnalysisClass function. The GUI versions allows a user to perform spectral or coherence analysis without having to do any programming. EXCEL and PowerPoint summaries are configured by user defined settings and specified spectral bands. Detail epoch by epoch and subject summaries are provided for both NREM and REM states. Additional details are described below. Output examples can be found in the [release section](https://github.com/DennisDean/SpectralTrainFig/releases).
 
 #### Getting Started
 Brief getting started guides are provided if you want to work with the [source code](https://github.com/DennisDean/SpectralTrainFig/blob/master/QuickStartSouceCode.md) or the easy to use [MATLAB App](https://github.com/DennisDean/SpectralTrainFig/blob/master/QuickStartNoSourceCode.md).
@@ -34,6 +34,10 @@ Review our [standard operating procedure (SOP)](https://github.com/DennisDean/Sp
 *Spectral Settings*
 -    Default.  The default settings include a 10x4 second sub-epochs, a 50% [tukey window] (http://en.wikipedia.org/wiki/Window_function#Tukey_window) and a 30 second sleep staging scoring window.
 -    SHHS.  The settings used for the [Sleep Heart Health Study](http://www.ncbi.nlm.nih.gov/pubmed/9493915) can be selected. The settings are 6x5 second sub-epochs, a [hanning window](http://en.wikipedia.org/wiki/Hann_function) and a 30 second sleep staging scoring window.
+
+*ECG decontamination*. If selected, applies a template-subtraction method to remove the ECG artifact from all EEG leads.
+
+*ECG channel name*. Enter the label of the ECG signal as a cell string (ex. {'ECG'}).
 
 *Artifact Detection*
 -    Delta (0.6-4.6 Hz). Set the multiplicative threshold for the delta band. The default value is 2.5.
