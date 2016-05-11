@@ -1,6 +1,4 @@
 function varargout = GetMatchedSleepEdfXmlFiles (varargin)
-% MODIFIED BY SARA ON 12/1/15
-% fixed some bugs :)
 %GetMatchedSleepFiles Search recursively for EDF and XML(annotations) files
 %      GetMatchedSleepFiles is a function for identifying EDF and
 %      annotation (XML) files often collected as part of a sleep study. 
@@ -79,7 +77,7 @@ function varargout = GetMatchedSleepEdfXmlFiles (varargin)
 %
 
 % Program parameters
-xmlSuffix = '.edf.XML';
+xmlSuffix = '-profussion.xml';
 tableLabels = {'ID', ... 
                'EDF Name', 'EDF Date', 'EDF Bytes', ... 
                'EDF Folder Date Num',  'EDF Folder' ... 
@@ -164,40 +162,21 @@ xmlPrefixStr = cellfun(xmlFnPrefixF, xmlFnList, ...
     'UniformOutput', 0);
 
 % check if matched EDF pair exists
-% checkForPairF = @(x)find(cell2mat(strfind(xmlPrefixStr, x)));   
-% edfPairExists = (cellfun(checkForPairF, edfPrefixStr, ...
-%     'UniformOutput', 0));
-% edfPairExists = ~cellfun(@isempty, edfPairExists);
-% edfPairExistsIndexFlag = edfPairExists > 0;
-checkForPairF = @(x)(strcmp(xmlPrefixStr, x));  
+checkForPairF = @(x)find(cell2mat(strfind(xmlPrefixStr, x)));   
 edfPairExists = (cellfun(checkForPairF, edfPrefixStr, ...
     'UniformOutput', 0));
-edfPairExists=cell2mat(edfPairExists);
-edfWithXml=reshape(edfPairExists,length(xmlPrefixStr),length(edfPrefixStr));
-edfWithXml=sum(edfWithXml);
-edfWithNoPairIndexes = find(0==edfWithXml);
-numEdfWithNoPairIndexes = length(edfWithNoPairIndexes);
-edfPairExistsIndexFlag = edfWithXml > 0;
+edfPairExists = ~cellfun(@isempty, edfPairExists);
+edfPairExistsIndexFlag = edfPairExists > 0;
 
 % check if matched XML pair exists
-%checkForPairF = @(x)(cell2mat(strfind(edfPrefixStr, x)));   
-checkForPairF = @(x)(strcmp(edfPrefixStr, x));  
+checkForPairF = @(x)(cell2mat(strfind(edfPrefixStr, x)));   
 xmlPairExists = (cellfun(checkForPairF, xmlPrefixStr, ...
     'UniformOutput', 0));
-xmlPairExists=cell2mat(xmlPairExists);
-%xmlPairExists = ~cellfun(@isempty, xmlPairExists);
-
-% xmlPairExists has numedf x numxml elements, with 1 for matches and
-% 0 for all the others 
-xmlWithEdf=reshape(xmlPairExists,length(edfPrefixStr),length(xmlPrefixStr));
-xmlWithEdf=sum(xmlWithEdf);
-xmlWithNoPairIndexes = find(0==xmlWithEdf);
-numXmlWithNoPairIndexes = length(xmlWithNoPairIndexes);
+xmlPairExists = ~cellfun(@isempty, xmlPairExists);
 
 % Create summaries for presentation
-numPairedEdfXmlFiles = sum(1==edfWithXml);
-pairedEdfFileListEntryIndex = edfExtensionIndex(edfPairExistsIndexFlag);
-%%%%%%%%%%%%%%%%%
+numPairedEdfXmlFiles = sum(1==edfPairExists);
+pairedEdfFileListEntryIndex = edfExtensionIndex(edfPairExists);
 
 % Find matched XML entry
 checkForPairF = @(x)find(~cellfun(@isempty, strfind(xmlPrefixStr,x)));  
@@ -206,24 +185,29 @@ edfPairXmlFnIndex = ...
     xmlExtensionIndex(cell2mat(edfPairingExists(edfPairExistsIndexFlag)));
 
 % Identify EDF names and entries that don't have a matched pair 
-if numEdfWithNoPairIndexes>0
+if sum(0==edfPairExists)>0
+    % Find EDF's with out pairs
+    edfWithNoPairIndexes = find(0==edfPairExists);
+    numEdfWithNoPairIndexes = length(edfWithNoPairIndexes);
+
     % Print EDF names for which an XML file could not be found
     fprintf('EDF File names for which an XML file could not be found\n');
     for f = 1:numEdfWithNoPairIndexes
-        % I fixed a bug here (SM 12/1/15)
-        fprintf('\t%s\n', edfFnList{edfWithNoPairIndexes(f)})
+        fprintf('\t%s\n', edfFnList{f})
     end
     fprintf ('Number of EDF files for which a matched XML file could not be found: %.0f\n',numEdfWithNoPairIndexes);
 end
 
 % Identify XML names and entries that don't have a matched pair 
-if numXmlWithNoPairIndexes>0
-    % Print XML names for which an EDF file could not be found
+if sum(0==xmlPairExists)>0
+    % Find XML's with out pairs
+    xmlWithNoPairIndexes = find(0==xmlPairExists);
+    numXmlWithNoPairIndexes = length(xmlWithNoPairIndexes);
+
+    % Print EDF names for which an XML file could not be found
     fprintf('\nXML File names for which an EDF file could not be found\n');
     for f = 1:numXmlWithNoPairIndexes
-        % I fixed a bug here (SM 12/1/15)
-       % fprintf('\t%s\n', xmlFnList{f})
-       fprintf('\t%s\n', xmlFnList{xmlWithNoPairIndexes (f)})
+        fprintf('\t%s\n', xmlFnList{f})
     end
     fprintf ('Number of XML files for which a matched EDF file could not be found: %.0f\n\n',numXmlWithNoPairIndexes);
 end
@@ -237,11 +221,11 @@ splitFileListCellwLabels = cell(numMatchedFiles+1, (2*numCols+1));
 % Add Labels
 splitFileListCellwLabels(1,1:end) = tableLabels;
 splitFileListCellwLabels(2:end, 1) = num2cell([1:1:numMatchedFiles]');
-xmlNumbers=find(xmlWithEdf);
+
 % Move file listing information into appropraite slot
 for f = 1:numMatchedFiles
     edfFnIndex = pairedEdfFileListEntryIndex(f);
-    xmlFnIndex = xmlNumbers(f);
+    xmlFnIndex = edfPairXmlFnIndex(f);
     splitFileListCellwLabels(1+f,2:6) = fileListCellwLabels(1+edfFnIndex, 1:5);
     splitFileListCellwLabels(1+f,7:11) = xmlFileListCellwLabels(1+xmlFnIndex, 1:5);
 end
