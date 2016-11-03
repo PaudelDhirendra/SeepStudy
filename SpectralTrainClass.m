@@ -263,14 +263,14 @@ classdef SpectralTrainClass
     % Boston, MA  02149
     %
     % File created: April 21, 2014
-    % Last updated: May 12, 2016 by Sara
+    % Last updated: Nov 11, 2016 by Sara
     % -- fixed bugs
     % -- works on Matlab 2015b
     % -- added ECG decontamination
     % -- prints one figure at the time
     % -- handles heterogeneous units in different channels
     %
-    % Copyright © [2014] The Brigham and Women's Hospital, Inc. THE BRIGHAM AND
+    % Copyright Â© [2014] The Brigham and Women's Hospital, Inc. THE BRIGHAM AND
     % WOMEN'S HOSPITAL, INC. AND ITS AGENTS RETAIN ALL RIGHTS TO THIS SOFTWARE
     % AND ARE MAKING THE SOFTWARE AVAILABLE ONLY FOR SCIENTIFIC RESEARCH
     % PURPOSES. THE SOFTWARE SHALL NOT BE USED FOR ANY OTHER PURPOSES, AND IS
@@ -1005,13 +1005,13 @@ classdef SpectralTrainClass
                         end
                         
                         % Zero Signal by 30 second epochs
-                        dataAvg = reshape(signalCell{1}(1:numPtsPer30secEpoch*returnedNum30SecEpochs),...
-                            returnedNum30SecEpochs, numPtsPer30secEpoch);
-                        dataAvg =reshape((mean(dataAvg,2)*ones(1, numPtsPer30secEpoch))', ...
-                            returnedNum30SecEpochs*numPtsPer30secEpoch,1);
-                        dataZeroed = ...
-                            signalCell{1}(1:numPtsPer30secEpoch*returnedNum30SecEpochs)...
-                            -dataAvg;...
+                        dataAvg = reshape(signalCell{s}(1:numPtsPer30secEpoch*returnedNum30SecEpochs), ...
+                        numPtsPer30secEpoch, returnedNum30SecEpochs );
+                        dataAvg = reshape((transpose(mean(dataAvg,1))*ones(1, numPtsPer30secEpoch))', ...
+                        returnedNum30SecEpochs*numPtsPer30secEpoch,1);
+                        
+                        dataZeroed = signalCell{1}(1:numPtsPer30secEpoch*returnedNum30SecEpochs)...
+                            -dataAvg;
                             
                         % Compute overall spectrum
                         noverlapPts = floor(SR*(noverlap*spectralBinWidth - epochWidth)/noverlap);
