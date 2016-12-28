@@ -69,7 +69,7 @@ function varargout = SpectralTrainFig(varargin)
 
 % Edit the above text to modify the response to help SpectralTrainFig
 
-% Last Modified by GUIDE v2.5 19-Apr-2016 13:41:50
+% Last Modified by GUIDE v2.5 28-Dec-2016 11:18:02
 
 % Begin initialization code - DO NOT EDIT
 clc
@@ -131,6 +131,9 @@ set(handles.edit12, 'String','{''ECG''}');
 
 % Set Default to not perform ECG artifact decontamination
 set(handles.checkbox2, 'Value',0)
+
+% Set Default to not perform cycle analysis
+set(handles.checkbox3, 'Value',0)
 
 % Get Monitor Positions and set to first monitor
 monitorPositionsStrCell = ConvertMonitorPosToFigPos;
@@ -232,6 +235,9 @@ denoise_ecg =  ...
     get(handles.checkbox2, 'Value');
 ecg_name=eval(...
     get(handles.edit12, 'String'));
+cycles_analysis=...
+    get(handles.checkbox3, 'Value');
+
 % Create spectral analysis structure
 stcStruct.analysisDescription = analysisDescription;
 stcStruct.StudyEdfFileListResultsFn = strcat(outputFilePrefix, ...
@@ -251,7 +257,7 @@ stcStruct.StudyBandSummary = strcat( ...
     outputFilePrefix, 'BandSummary.xlsx');
 stcStruct.checkFile = strcat(stcStruct.StudyEdfResultDir, ...
         stcStruct.StudyEdfFileListResultsFn);
-
+stcStruct.cycles_analysis=cycles_analysis;
     
 % Create class object
 stcObj = SpectralTrainClass(stcStruct);
@@ -580,6 +586,8 @@ denoise_ecg =  ...
 if denoise_ecg
     set(handles.edit12,'enable','on')
 end
+cycles_analysis=...
+    get(handles.checkbox3, 'Value');
 % Create spectral analysis structure
 stcStruct.analysisDescription = analysisDescription;
 stcStruct.StudyEdfFileListResultsFn = strcat(outputFilePrefix, ...
@@ -820,6 +828,8 @@ denoise_ecg =  ...
 if denoise_ecg
     set(handles.edit12,'enable','on')
 end
+cycles_analysis=...
+    get(handles.checkbox3, 'Value');
 
 % Create spectral analysis structure
 stcStruct.analysisDescription = analysisDescription;
@@ -1118,6 +1128,8 @@ if ~isempty(filePartitioningLabel)
 if denoise_ecg
     set(handles.edit12,'enable','on')
 end
+cycles_analysis=...
+    get(handles.checkbox3, 'Value');
 
         % Create spectral analysis structure
         stcStruct.analysisDescription = analysisDescription;
@@ -1324,3 +1336,12 @@ function edit12_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in checkbox3.
+function checkbox3_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox3 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox3

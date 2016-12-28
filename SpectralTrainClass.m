@@ -1,6 +1,14 @@
 classdef SpectralTrainClass
     %SpectralTrainClass Spectral analysis program
     %
+    % Last updated: December 27, 2016 by Sara
+    % -- incorporated cycle analysis
+    % -- fixed bugs
+    % -- works on Matlab 2015b
+    % -- added ECG decontamination
+    % -- prints one figure at the time
+    % -- handles heterogeneous units in different channels
+    %
     %       A flexible spectral analysis program developed to analyze sleep
     %   studies.  A spectral threshold artifact detection approach is
     %   included and modeled after the appraoch described in Buckelmuller
@@ -257,20 +265,12 @@ classdef SpectralTrainClass
     % Dennis A. Dean, II, Ph.D
     %
     % Program for Sleep and Cardiovascular Medicine
-    % Brigam and Women's Hospital
+    % Brigham and Women's Hospital
     % Harvard Medical School
     % 221 Longwood Ave
     % Boston, MA  02149
     %
-    % File created: April 21, 2014
-    % Last updated: Nov 11, 2016 by Sara
-    % -- fixed bugs
-    % -- works on Matlab 2015b
-    % -- added ECG decontamination
-    % -- prints one figure at the time
-    % -- handles heterogeneous units in different channels
-    %
-    % Copyright Â© [2014] The Brigham and Women's Hospital, Inc. THE BRIGHAM AND
+    % Copyright © [2014] The Brigham and Women's Hospital, Inc. THE BRIGHAM AND
     % WOMEN'S HOSPITAL, INC. AND ITS AGENTS RETAIN ALL RIGHTS TO THIS SOFTWARE
     % AND ARE MAKING THE SOFTWARE AVAILABLE ONLY FOR SCIENTIFIC RESEARCH
     % PURPOSES. THE SOFTWARE SHALL NOT BE USED FOR ANY OTHER PURPOSES, AND IS
@@ -428,6 +428,7 @@ classdef SpectralTrainClass
         checkFile
         ecgName
         denoiseEcg
+        cycles_analysis
         
         % Optional input
         bandFn = '';
@@ -476,6 +477,7 @@ classdef SpectralTrainClass
                 stcStruct.StudyEdfFileListResultsFn;
             obj.denoiseEcg=stcStruct.denoiseEcg;
             obj.ecgName=stcStruct.ecgName;
+            obj.cycles_analysis=stcStruct.cycles_analysis;
             
             % Process band information
             if nargin == 2
@@ -713,7 +715,7 @@ classdef SpectralTrainClass
                 % Calculate the number of signals to analyze
                 processNsignals = numAnalysisSignals;
                 for f = processStart:processFiles
-                    tic
+                    
                     % Check if signals are present
                     if isempty(checkValues)
                         continue;
@@ -789,27 +791,27 @@ classdef SpectralTrainClass
                         warnMsg = 'Physical Dimension is not constant across channels';
                         warning(warnMsg)
                         try
-                        % find the ones that are in mV
-                        milli=find(strcmp(physical_dimension2,'mV'));
-                        if ~isempty(milli)
-                        display(['I found ' num2str(length(milli)) ' signals in mV. Converting to uV'])
-                        % just convert everything into uV
-                        mV_to_uV_F = @(x)x.*1000;
-                        signalCell(milli) = cellfun(mV_to_uV_F, signalCell(milli), ...
-                            'UniformOutput', 0);
-                        physical_dimension2(milli)={'uV'};
-                        end
-                        
-                        micro=find(strcmp(physical_dimension2,'uV'));
-                        volt=setdiff([1:length(physical_dimension2)],[milli micro]);
-                        if ~isempty(volt)
-                        display(['I found ' num2str(length(volt)) ' signals in V. Converting to uV'])  
-                        V_to_uV_F = @(x)x.*1000000;
-                        signalCell(volt) = cellfun(V_to_uV_F, signalCell(volt), ...
-                            'UniformOutput', 0);
-                        physical_dimension2(volt)={'uV'};
-                        end
-                    physical_dimension = unique(physical_dimension2);
+                            % find the ones that are in mV
+                            milli=find(strcmp(physical_dimension2,'mV'));
+                            if ~isempty(milli)
+                                display(['I found ' num2str(length(milli)) ' signals in mV. Converting to uV'])
+                                % just convert everything into uV
+                                mV_to_uV_F = @(x)x.*1000;
+                                signalCell(milli) = cellfun(mV_to_uV_F, signalCell(milli), ...
+                                    'UniformOutput', 0);
+                                physical_dimension2(milli)={'uV'};
+                            end
+                            
+                            micro=find(strcmp(physical_dimension2,'uV'));
+                            volt=setdiff([1:length(physical_dimension2)],[milli micro]);
+                            if ~isempty(volt)
+                                display(['I found ' num2str(length(volt)) ' signals in V. Converting to uV'])
+                                V_to_uV_F = @(x)x.*1000000;
+                                signalCell(volt) = cellfun(V_to_uV_F, signalCell(volt), ...
+                                    'UniformOutput', 0);
+                                physical_dimension2(volt)={'uV'};
+                            end
+                            physical_dimension = unique(physical_dimension2);
                         catch
                             return
                         end
@@ -830,53 +832,53 @@ classdef SpectralTrainClass
                         % case 1: I have mV
                         if strcmp(eegEdfUnits,milleVoltStr)
                             
-                     mV_to_uV_F = @(x)x.*1000;
-                        signalCell = cellfun(mV_to_uV_F, signalCell, ...
-                            'UniformOutput', 0);
-                        fprintf('\tUnit conversion from %s to %s\n', ...
-                            eegEdfUnits, analysisEegUnits);
-                        % case 2: I have V
+                            mV_to_uV_F = @(x)x.*1000;
+                            signalCell = cellfun(mV_to_uV_F, signalCell, ...
+                                'UniformOutput', 0);
+                            fprintf('\tUnit conversion from %s to %s\n', ...
+                                eegEdfUnits, analysisEegUnits);
+                            % case 2: I have V
                         elseif strcmp(eegEdfUnits,VoltStr)
                             V_to_uV_F = @(x)x.*1000.*1000;
-                        signalCell = cellfun(V_to_uV_F, signalCell, ...
-                            'UniformOutput', 0);
-                        fprintf('\tUnit conversion from %s to %s\n', ...
-                            eegEdfUnits, analysisEegUnits);
+                            signalCell = cellfun(V_to_uV_F, signalCell, ...
+                                'UniformOutput', 0);
+                            fprintf('\tUnit conversion from %s to %s\n', ...
+                                eegEdfUnits, analysisEegUnits);
                         end
                     elseif strcmp(analysisEegUnits, milleVoltStr) %I want mV
                         % Need to convert to millivolts
                         % case 1:I have uV
-                         if strcmp(eegEdfUnits,microVoltStr)
+                        if strcmp(eegEdfUnits,microVoltStr)
                             uV_to_mV_F = @(x)x./1000;
-                        signalCell = cellfun(uV_to_mV_F, signalCell, ...
-                            'UniformOutput', 0);
-                        fprintf('\tUnit conversion from %s to %s\n', ...
-                            eegEdfUnits, analysisEegUnits);
-                        % case 2: I have V
+                            signalCell = cellfun(uV_to_mV_F, signalCell, ...
+                                'UniformOutput', 0);
+                            fprintf('\tUnit conversion from %s to %s\n', ...
+                                eegEdfUnits, analysisEegUnits);
+                            % case 2: I have V
                         elseif strcmp(eegEdfUnits,VoltStr)
                             V_to_mV_F = @(x)x.*1000;
-                        signalCell = cellfun(V_to_mV_F, signalCell, ...
-                            'UniformOutput', 0);
-                        fprintf('\tUnit conversion from %s to %s\n', ...
-                            eegEdfUnits, analysisEegUnits);
+                            signalCell = cellfun(V_to_mV_F, signalCell, ...
+                                'UniformOutput', 0);
+                            fprintf('\tUnit conversion from %s to %s\n', ...
+                                eegEdfUnits, analysisEegUnits);
                         end
                     elseif strcmp(analysisEegUnits, voltStr)
                         % case 1: I have uV
                         if strcmp(eegEdfUnits,microVoltStr)
-                        uV_to_V_F = @(x)x./1000./1000;
-                        signalCell = cellfun(uV_to_V_F, signalCell, ...
-                            'UniformOutput', 0);
-                        fprintf('\tUnit conversion from %s to %s\n', ...
-                            eegEdfUnits, analysisEegUnits);
-                        % case 2: I have mV
+                            uV_to_V_F = @(x)x./1000./1000;
+                            signalCell = cellfun(uV_to_V_F, signalCell, ...
+                                'UniformOutput', 0);
+                            fprintf('\tUnit conversion from %s to %s\n', ...
+                                eegEdfUnits, analysisEegUnits);
+                            % case 2: I have mV
                         elseif strcmp(eegEdfUnits,milleVoltStr)
                             mV_to_V_F = @(x)x./1000;
-                        signalCell = cellfun(mV_to_V_F, signalCell, ...
-                            'UniformOutput', 0);
-                        fprintf('\tUnit conversion from %s to %s\n', ...
-                            eegEdfUnits, analysisEegUnits);
+                            signalCell = cellfun(mV_to_V_F, signalCell, ...
+                                'UniformOutput', 0);
+                            fprintf('\tUnit conversion from %s to %s\n', ...
+                                eegEdfUnits, analysisEegUnits);
                         end
-                      
+                        
                     else
                         % Units are not supported
                         warnMsg = sprintf('Signal units are not supported: %s',...
@@ -941,6 +943,10 @@ classdef SpectralTrainClass
                     end
                     numericHypnogram = lcaObj.numericHypnogram;
                     characterHypnogram = lcaObj.characterHypnogram;
+                    if length(numericHypnogram)>returnedNum30SecEpochs
+                        numericHypnogram(returnedNum30SecEpochs+1:end)=[];
+                        characterHypnogram(returnedNum30SecEpochs+1:end)=[];
+                    end
                     wakeMask = numericHypnogram==0;
                     sleepMask = and(numericHypnogram>=1, numericHypnogram<=5);
                     nremMask = and(numericHypnogram>=1, numericHypnogram<=4);
@@ -979,6 +985,7 @@ classdef SpectralTrainClass
                         fsecg=edfObj2.sample_rate(ecgindex);
                         signalCell=ecgDecont(signalCell,SR,ecg,fsecg,signalLabels);
                     end
+                    
                     %% Compute spectrogram
                     if COHERENCE_COMPUTE_SPECTRAL == 1
                         if VALIDATION_PLOTS == 1
@@ -1005,20 +1012,19 @@ classdef SpectralTrainClass
                         end
                         
                         % Zero Signal by 30 second epochs
-                        dataAvg = reshape(signalCell{s}(1:numPtsPer30secEpoch*returnedNum30SecEpochs), ...
-                        numPtsPer30secEpoch, returnedNum30SecEpochs );
-                        dataAvg = reshape((transpose(mean(dataAvg,1))*ones(1, numPtsPer30secEpoch))', ...
-                        returnedNum30SecEpochs*numPtsPer30secEpoch,1);
+                        dataAvg = reshape(signalCell{1}(1:numPtsPer30secEpoch*returnedNum30SecEpochs), numPtsPer30secEpoch, returnedNum30SecEpochs );
+                        dataAvg = reshape((transpose(mean(dataAvg,1))*ones(1, numPtsPer30secEpoch))', returnedNum30SecEpochs*numPtsPer30secEpoch,1);
                         
-                        dataZeroed = signalCell{1}(1:numPtsPer30secEpoch*returnedNum30SecEpochs)...
-                            -dataAvg;
+                        dataZeroed = ...
+                            signalCell{1}(1:numPtsPer30secEpoch*returnedNum30SecEpochs)...
+                            -dataAvg;...
                             
                         % Compute overall spectrum
                         noverlapPts = floor(SR*(noverlap*spectralBinWidth - epochWidth)/noverlap);
                         data = reshape(dataZeroed, 1, ...
                             numPtsPer30secEpoch, returnedNum30SecEpochs);
                         data=squeeze(data);
-                        [~,freq] = ...
+                        [~,freq,~] = ...
                             pwelch(data,spectralWindowFun,noverlapPts,spectralBinWidth*SR,SR);
                         
                         % Set frequency display
@@ -1047,14 +1053,15 @@ classdef SpectralTrainClass
                         swaEnd = swaEnd(end);
                         
                         % Compute pwelch for multiple signals
-                        fprintf('\tBegining spectral analysis\n');
+                        %fprintf('\tBegining spectral analysis\n');
                         pxxCell = cell(processNsignals, 1);
                         pxxCell30 = cell(processNsignals, 1);  % 30 second summary
                         artifactCell = cell(processNsignals, 1);
                         bandSummary = [];
                         for s = 1:processNsignals
+                            tic
                             % Echo status to console
-                            fprintf('\t\tComputing spectrogram for %s\n',signalLabels{s});
+                            %fprintf('\t\tComputing spectrogram for %s\n',signalLabels{s});
                             
                             % Zero Signal by 30 second epochs
                             % Following fix reccomended by Shaun Purcell
@@ -1113,12 +1120,12 @@ classdef SpectralTrainClass
                             betaArtifactIndex = find(betaArtifactMask);
                             
                             % Zero out artifact detection
-                            if APPLY_ARTIFACT_REJECTION == 0
-                                deltaArtifactMask(:) = 0;
-                                deltaArtifactIndex = [];
-                                betaArtifactMask(:) = 0;
-                                betaArtifactIndex = [];
-                            end
+                            %                             if APPLY_ARTIFACT_REJECTION == 0
+                            %                                 deltaArtifactMask(:) = 0;
+                            %                                 deltaArtifactIndex = [];
+                            %                                 betaArtifactMask(:) = 0;
+                            %                                 betaArtifactIndex = [];
+                            %                             end
                             
                             % Save artifact detection
                             artifact.deltaSpectrum = deltaSpectrum;
@@ -1139,13 +1146,13 @@ classdef SpectralTrainClass
                         
                         if COMPUTE_TOTAL_POWER == 1
                             % Echo status to console
-                            fprintf('\tSummarizing Total Power for %s\n',signalLabels{s});
+                            % fprintf('\tSummarizing Total Power for %s\n',signalLabels{s});
                             
                             % Create Total Power Summary
                             totalSummary = cell(processNsignals+3, 1+6*3);
                             for s = 1:processNsignals
                                 % Echo status to console
-                                fprintf('\t\tProcessing: %s\n',signalLabels{s});
+                                % fprintf('\t\tProcessing: %s\n',signalLabels{s});
                                 
                                 % Get Frequency Analysis Range
                                 analFreqIndex = find(maxAnalysisFrequency >= freq);
@@ -1155,48 +1162,48 @@ classdef SpectralTrainClass
                                 pxx = pxxCell{s};
                                 pxx = pxx(analFreqIndex,:);
                                 
-                                if PLOT_CALIBRATION_TEST == 1
-                                    % Create figure
-                                    fid = figure('InvertHardcopy','off','Color',[1 1 1]);
-                                    figs = [figs;fid];
-                                    set(fid, 'Position', figPos);
-                                    
-                                    % Plot Power Density
-                                    subplot(2,1,1,'LineWidth',2,'FontWeight','bold',...
-                                        'FontSize',14)
-                                    plot(analFreqVal, mean(pxx(:, sleepMask), 2), ...
-                                        'LineWidth',2);
-                                    box('on');
-                                    titleStr = sprintf('%s - %s - pwelch(%.0f) - Hanning window',...
-                                        edfFNames{f}, signalLabels{s}, spectralBinWidth);
-                                    title(titleStr, 'Interpreter', 'None', ...
-                                        'FontWeight','bold', 'FontSize',14);
-                                    ylabel(sprintf('Power Density (%s)',powerDensityUnits), ...
-                                        'FontWeight','bold','FontSize',14);
-                                    
-                                    % Format Axis
-                                    set(gca, 'LineWidth',plotLineWidth);
-                                    set(gca, 'Layer','top');
-                                    set(gca, 'FontWeight','bold');
-                                    set(gca, 'FontSize',fontSize);
-                                    
-                                    % Plot Power
-                                    P = pxx/spectralBinWidth;
-                                    subplot(2,1,2)
-                                    plot(analFreqVal, mean(P(:, sleepMask), 2), ...
-                                        'LineWidth',2);
-                                    box('on');
-                                    ylabel(sprintf('Power (%s)', powerUnits), ...
-                                        'FontWeight','bold','FontSize',14);
-                                    xlabel('Frequency (Hz)', 'FontWeight','bold',...
-                                        'FontSize',14);
-                                    
-                                    % Format Axis
-                                    set(gca, 'LineWidth',plotLineWidth);
-                                    set(gca, 'Layer','top');
-                                    set(gca, 'FontWeight','bold');
-                                    set(gca, 'FontSize',fontSize);
-                                end
+                                %                                 if PLOT_CALIBRATION_TEST == 1
+                                %                                     % Create figure
+                                %                                     fid = figure('InvertHardcopy','off','Color',[1 1 1]);
+                                %                                     figs = [figs;fid];
+                                %                                     set(fid, 'Position', figPos);
+                                %
+                                %                                     % Plot Power Density
+                                %                                     subplot(2,1,1,'LineWidth',2,'FontWeight','bold',...
+                                %                                         'FontSize',14)
+                                %                                     plot(analFreqVal, mean(pxx(:, sleepMask), 2), ...
+                                %                                         'LineWidth',2);
+                                %                                     box('on');
+                                %                                     titleStr = sprintf('%s - %s - pwelch(%.0f) - Hanning window',...
+                                %                                         edfFNames{f}, signalLabels{s}, spectralBinWidth);
+                                %                                     title(titleStr, 'Interpreter', 'None', ...
+                                %                                         'FontWeight','bold', 'FontSize',14);
+                                %                                     ylabel(sprintf('Power Density (%s)',powerDensityUnits), ...
+                                %                                         'FontWeight','bold','FontSize',14);
+                                %
+                                %                                     % Format Axis
+                                %                                     set(gca, 'LineWidth',plotLineWidth);
+                                %                                     set(gca, 'Layer','top');
+                                %                                     set(gca, 'FontWeight','bold');
+                                %                                     set(gca, 'FontSize',fontSize);
+                                %
+                                %                                     % Plot Power
+                                %                                     P = pxx/spectralBinWidth;
+                                %                                     subplot(2,1,2)
+                                %                                     plot(analFreqVal, mean(P(:, sleepMask), 2), ...
+                                %                                         'LineWidth',2);
+                                %                                     box('on');
+                                %                                     ylabel(sprintf('Power (%s)', powerUnits), ...
+                                %                                         'FontWeight','bold','FontSize',14);
+                                %                                     xlabel('Frequency (Hz)', 'FontWeight','bold',...
+                                %                                         'FontSize',14);
+                                %
+                                %                                     % Format Axis
+                                %                                     set(gca, 'LineWidth',plotLineWidth);
+                                %                                     set(gca, 'Layer','top');
+                                %                                     set(gca, 'FontWeight','bold');
+                                %                                     set(gca, 'FontSize',fontSize);
+                                %                                 end
                                 
                                 % Compute Power During Sleep
                                 P = pxx/spectralBinWidth;
@@ -1213,7 +1220,8 @@ classdef SpectralTrainClass
                                 PtotalREM = mean(sum(P(:,remMask),1));
                                 PtotalZeroTopREM = PtotalREM*2;
                                 PtotalDensityREM = PtotalREM*spectralBinWidth;
-                                
+                                toc
+                                tic
                                 % Record values
                                 totalSummary (3+s,2:end) = ...
                                     num2cell(...
@@ -1287,8 +1295,11 @@ classdef SpectralTrainClass
                                     artifactCell{s}.betaArtifactMask', ...
                                     artifactCell{s}.artifactMask];
                                 spectralOut = num2cell(spectralOut);
-                                spectralOut(:,2) = cellstr(characterHypnogram);
-                                
+                                if ~isempty(characterHypnogram)
+                                    spectralOut(:,2) = cellstr(characterHypnogram);
+                                else
+                                    spectralOut(:,2)=spectralOut(:,1);
+                                end
                                 % Create Frequency
                                 createLabelF  = @(x)sprintf('%.2f Hz',freq(x));
                                 labelCell = arrayfun(createLabelF, fIdx', ...
@@ -1339,8 +1350,8 @@ classdef SpectralTrainClass
                                     zeroMask = or(wakeMask, artifactMask);
                                     bandMask = and(band(1) <= freq, freq <= band(2));
                                     sleepIndex = and(~artifactMask, sleepMask);
-                                    bandSpectrumSleep = mean(sum(pxxCell{s}(bandMask, sleepIndex),1));
-                                    bandSpectrumSleep = mean(sum(pxxCell{s}(bandMask, sleepIndex),1));
+                                   
+                                    bandSpectrumSleep = mean(mean(pxxCell{s}(bandMask, sleepIndex),1));
                                     bandSpectrumSleepLog = log10(bandSpectrumSleep);
                                     bandSpectrumSleepLog = mean(log10(mean(pxxCell{s}(bandMask, sleepIndex),2)));
                                     bandSpectrumSleep = 10.^(bandSpectrumSleepLog);
@@ -1416,6 +1427,11 @@ classdef SpectralTrainClass
                         
                         %%  Plot Multiple Estimate
                         % THE FIGURES BEGIN HERE
+                        %                         PLOT_ARTIFACT_SUMMARY=0;
+                        %                         PLOT_SPECTRAL_SUMMARY=0;
+                        %                         obj.PLOT_COMPREHENSIVE_SPECTRAL_SUMMARY=0;
+                        %                         PLOT_NREM_REM_SPECTRUM=0;
+                        %                         PLOT_BAND_ACTIVITY=0;
                         % If we are plotting any figures
                         if PLOT_ARTIFACT_SUMMARY+PLOT_SPECTRAL_SUMMARY+obj.PLOT_COMPREHENSIVE_SPECTRAL_SUMMARY...
                                 +PLOT_NREM_REM_SPECTRUM+PLOT_BAND_ACTIVITY>0
@@ -1656,7 +1672,7 @@ classdef SpectralTrainClass
                                 end
                                 
                             end % Plot Spectral Summary Panel
-                            
+                            % obj.PLOT_COMPREHENSIVE_SPECTRAL_SUMMARY = 0;
                             %% Create Figure - Panel (contour, SWA, Hypnogram and Spectra)
                             if obj.PLOT_COMPREHENSIVE_SPECTRAL_SUMMARY == 1;
                                 % Create figure
@@ -2067,13 +2083,15 @@ classdef SpectralTrainClass
                                     % Determine segments of sleep data to plot
                                     sleepStart = find(zeroMask(1:end-1)>zeroMask(2:end));
                                     sleepEnd  = find(zeroMask(1:end-1)<zeroMask(2:end));
-                                    if length(sleepStart) > length(sleepEnd)
+                                    if sleepStart(end) > sleepEnd(end)
                                         % Add final sleep
                                         sleepEnd = [sleepEnd; length(zeroMask)];
-                                    elseif length(sleepStart) < length(sleepEnd)
+                                    end
+                                    if sleepStart(1) > sleepEnd(1)
                                         % Add starting sleep
                                         sleepStart = [1; sleepStart];
                                     end
+                                    
                                     numLineSegmentsToPlot = length(sleepStart);
                                     
                                     % Plot each line segment
@@ -2187,10 +2205,78 @@ classdef SpectralTrainClass
                         if obj.CREATE_POWER_POINT_SUMMARY == 1
                             % close and save the ppt
                             saveppt2(pptPathFn,'ppt',ppt,'close');
+                            toc
                         end
                         % Echo status to console
                         fprintf('\tGenerated figures saved to PowerPoint: %s\n', pptFn);
                         clear ppt pptFn
+                        % cycle-by-cycle spectral analysis
+                    if obj.cycles_analysis
+                        % calculate cycles
+                        cycles=sleep_cycles(numericHypnogram);
+                        c=unique(cycles);
+                        c(c==0)=[];
+                        % create table
+                        lab=[{'EEG lead'},{'Cycle #'},{'Start epoch'}, ...
+                            {'End epoch'},labelCell(4:54)];
+                        % for each signal
+                        k=1;
+                        for kk=1:numAnalysisSignals
+                            sppow=pxxCell{kk};
+                            artif=artifactCell{kk}.artifactMask;
+                            sppow=sppow(1:51,:);
+%                             band = bandsOfInterest{1}{2};
+%                             bandMask = and(band(1) <= freq, freq <= band(2));
+%                             avg_slow=mean(sppow(find(bandMask),:));
+%                             band = bandsOfInterest{2}{2};
+%                             bandMask = and(band(1) <= freq, freq <= band(2));
+%                             avg_delta=mean(sppow(find(bandMask),:));
+%                             band = bandsOfInterest{3}{2};
+%                             bandMask = and(band(1) <= freq, freq <= band(2));
+%                             avg_theta=mean(sppow(find(bandMask),:));
+%                             band = bandsOfInterest{4}{2};
+%                             bandMask = and(band(1) <= freq, freq <= band(2));
+%                             avg_alpha=mean(sppow(find(bandMask),:));
+%                             band = bandsOfInterest{5}{2};
+%                             bandMask = and(band(1) <= freq, freq <= band(2));
+%                             avg_slow=mean(sppow(find(bandMask),:));
+%                             band = bandsOfInterest{6}{2};
+%                             bandMask = and(band(1) <= freq, freq <= band(2));
+%                             avg_slow=mean(sppow(find(bandMask),:));
+%                             band = bandsOfInterest{7}{2};
+%                             bandMask = and(band(1) <= freq, freq <= band(2));
+%                             avg_slow=mean(sppow(find(bandMask),:));
+%                             band = bandsOfInterest{1}{2};
+%                             bandMask = and(band(1) <= freq, freq <= band(2));
+%                             avg_slow=mean(sppow(find(bandMask),:));
+                            % for each cycle
+                            for jj=1:length(c)
+                            name{k,1}=signalLabels{kk};
+                            cyclenum{k,1}=c(jj);
+                            n=find(cycles==c(jj));
+                            start_ep{k,1}=n(1);
+                            end_ep{k,1}=n(end);
+                            sppowc1=sppow(:,n);
+                            sppowc1(:,artif(n)==1)=[];
+                            sppowc(k,:)=mean(sppowc1');
+                            k=k+1;
+                            end
+                        end
+                        % create Excel spreadsheet
+                        cyclesOut = [lab; [name cyclenum start_ep ...
+                            end_ep num2cell(sppowc)]];
+                                tit=nan(1,size(cyclesOut,2));
+                                tit=num2cell(tit);
+                                tit{5}='Power Density (uV^2/Hz)';
+                                cyclesOut=[tit;cyclesOut];
+                                % Save summary
+                                specCyclesXlsFn = sprintf('%s.cycles.spectral.xlsx',...
+                                    edfFNames{f});
+                                specCyclesXlsFn = ...
+                                    strcat(StudyEdfResultDir, specCyclesXlsFn);
+                                xlswrite(specCyclesXlsFn, cyclesOut);
+                                fprintf('\t\t%.0f. %s\n', s, specCyclesXlsFn);
+                    end
                     end
                     %obj.CloseChildrenFigures;
                     %% Compute Coherence Estimate
@@ -2275,29 +2361,29 @@ classdef SpectralTrainClass
                             
                             % Create figure
                             maxCorr = max(max(CxyEpochMatrix));
-                            fid = imageColorMap( jet(numColors), [0 1], CxyEpochMatrix, figPos);
-                            cohFid = [cohFid; fid];
+                            %   fid = imageColorMap( jet(numColors), [0 1], CxyEpochMatrix, figPos);
+                            %  cohFid = [cohFid; fid];
                             
                             % Annotate
                             titleStr = sprintf('Coherence - Welsch - %s - %s', ...
                                 signalLabels{signalPerm(c,1)}, signalLabels{signalPerm(c,2)});
-                            title(titleStr,...
-                                'Interpreter', 'None');
-                            xlabel('Epoch');
-                            ylabel('Frequency(Hz)');
+                            %                             title(titleStr,...
+                            %                                 'Interpreter', 'None');
+                            %                             xlabel('Epoch');
+                            %                             ylabel('Frequency(Hz)');
                             
-                            % Format GCA
-                            set(gca, 'YTick', axisIndex);
-                            set(gca, 'YTickLabel', num2str(flipud(axisVal)));
-                            set(gca, 'LineWidth', 2);
-                            set(gca, 'FontWeight', 'bold');
-                            set(gca, 'FontSize',14);
-                            
+                            %                             % Format GCA
+                            %                             set(gca, 'YTick', axisIndex);
+                            %                             set(gca, 'YTickLabel', num2str(flipud(axisVal)));
+                            %                             set(gca, 'LineWidth', 2);
+                            %                             set(gca, 'FontWeight', 'bold');
+                            %                             set(gca, 'FontSize',14);
+                            %
                             %% Create Coherence Spectrum
-                            fid = figure('InvertHardcopy','off','Color',[1 1 1]);
-                            set(fid,'Position', figPos);
-                            cohFid = [cohFid; fid];
-                            subplot(1,1,1);
+                            %                             fid = figure('InvertHardcopy','off','Color',[1 1 1]);
+                            %                             set(fid,'Position', figPos);
+                            %                             cohFid = [cohFid; fid];
+                            %                             subplot(1,1,1);
                             
                             % Get data and zero wake values
                             pxxEpoch = CxyEpochMatrix;
@@ -2306,58 +2392,58 @@ classdef SpectralTrainClass
                             artifactMask = artifactCell{s}.artifactMask;
                             
                             % Convert from Power Density^2 to Power
-                            nremData = mean(...
+                            nremData = nanmean(...
                                 pxxEpoch(:, and(nremMask,~artifactMask)),2);
-                            remData = mean(...
+                            remData = nanmean(...
                                 pxxEpoch(:, and(remMask,~artifactMask)),2);
                             
-                            % Plot Data
-                            plot(freq(fIdx),nremData(fIdx),...
-                                'k', 'LineWidth',plotLineWidth); hold on;
-                            plot(freq(fIdx),remData(fIdx),...
-                                'b', 'LineWidth',plotLineWidth);
-                            
-                            % Add annotations
-                            titleStr = sprintf('Coherence - Welsch - %s - %s', ...
-                                signalLabels{signalPerm(c,1)}, signalLabels{signalPerm(c,2)});
-                            title(titleStr,'FontWeight','bold','FontSize',fontSize,...
-                                'Interpreter', 'None');
-                            xlabel('Frequency (Hz)', 'FontWeight','bold','FontSize',fontSize);
-                            ylabel('Coherence', ...
-                                'FontWeight','bold','FontSize',fontSize);
+                            %                             % Plot Data
+                            %                             plot(freq(fIdx),nremData(fIdx),...
+                            %                                 'k', 'LineWidth',plotLineWidth); hold on;
+                            %                             plot(freq(fIdx),remData(fIdx),...
+                            %                                 'b', 'LineWidth',plotLineWidth);
+                            %
+                            %                             % Add annotations
+                            %                             titleStr = sprintf('Coherence - Welsch - %s - %s', ...
+                            %                                 signalLabels{signalPerm(c,1)}, signalLabels{signalPerm(c,2)});
+                            %                             title(titleStr,'FontWeight','bold','FontSize',fontSize,...
+                            %                                 'Interpreter', 'None');
+                            %                             xlabel('Frequency (Hz)', 'FontWeight','bold','FontSize',fontSize);
+                            %                             ylabel('Coherence', ...
+                            %                                 'FontWeight','bold','FontSize',fontSize);
                             curCohSignals = {signalLabels{signalPerm(c,1)}, ...
                                 signalLabels{signalPerm(c,2)}};
                             
                             % Plot Band Specification
-                            v = axis; h = v(4)-v(3);
-                            for boi = 1:numBandsOfInterest
-                                band = bandsOfInterest{boi}{2};
-                                w = band(2)-band(1);
-                                rectangle('Position',[band(1),v(3),w,h], ...
-                                    'FaceColor', bandColors(mod(boi-1, numBandColors)+1,:));
-                                th = v(4) - diff(v(3:4))*0.05;
-                                text(mean(band), th, bandsOfInterestLatex{boi}, ...
-                                    'Interpreter', 'Latex', 'FontSize', fontSize+4,...
-                                    'HorizontalAlignment','center');
-                            end
-                            
-                            % Re-Plot Data
-                            plot(freq(fIdx),nremData(fIdx),...
-                                'k', 'LineWidth',plotLineWidth); hold on;
-                            plot(freq(fIdx),remData(fIdx),...
-                                'b', 'LineWidth',plotLineWidth);
-                            
-                            % Format Axis
-                            set(gca, 'LineWidth',plotLineWidth);
-                            set(gca, 'Layer','top');
-                            set(gca, 'FontWeight','bold');
-                            set(gca, 'FontSize',fontSize);
-                            
-                            % Reset axis
-                            axis(v);
-                            % Add legend
-                            legend('NREM','REM');
-                            
+                            %                             v = axis; h = v(4)-v(3);
+                            %                             for boi = 1:numBandsOfInterest
+                            %                                 band = bandsOfInterest{boi}{2};
+                            %                                 w = band(2)-band(1);
+                            %                                 rectangle('Position',[band(1),v(3),w,h], ...
+                            %                                     'FaceColor', bandColors(mod(boi-1, numBandColors)+1,:));
+                            %                                 th = v(4) - diff(v(3:4))*0.05;
+                            %                                 text(mean(band), th, bandsOfInterestLatex{boi}, ...
+                            %                                     'Interpreter', 'Latex', 'FontSize', fontSize+4,...
+                            %                                     'HorizontalAlignment','center');
+                            %                             end
+                            %
+                            %                             % Re-Plot Data
+                            %                             plot(freq(fIdx),nremData(fIdx),...
+                            %                                 'k', 'LineWidth',plotLineWidth); hold on;
+                            %                             plot(freq(fIdx),remData(fIdx),...
+                            %                                 'b', 'LineWidth',plotLineWidth);
+                            %
+                            %                             % Format Axis
+                            %                             set(gca, 'LineWidth',plotLineWidth);
+                            %                             set(gca, 'Layer','top');
+                            %                             set(gca, 'FontWeight','bold');
+                            %                             set(gca, 'FontSize',fontSize);
+                            %
+                            %                             % Reset axis
+                            %                             axis(v);
+                            %                             % Add legend
+                            %                             legend('NREM','REM');
+                            %
                             % Record Average Spectra
                             avgCohSpectra = [avgCohSpectra; ...
                                 nremData(fIdx)',remData(fIdx)'];
@@ -2399,23 +2485,23 @@ classdef SpectralTrainClass
                             avgCohOut];
                         xlswrite(coherenceResultFN, avgCohOut);
                         
-                        % Save Figures
-                        if obj.CREATE_COHERENCE_POWER_POINT_SUMMARY == 1
-                            % Save figures
-                            figs = [figs;cohFid];
-                            pptFn = strcat(StudyEdfResultDir, edfFNames{f},'.coherence.ppt');
-                            titleStr = sprintf('%s - %s', 'Coherence', edfFNames{f});
-                            imageResolution = imageResolution;
-                            obj.CreateSignalPPT (cohFid, pptFn, titleStr, imageResolution)
-                        end
-                        
-                        % Close Figures
-                        obj.CloseChildrenFigures;
+                        %                         % Save Figures
+                        %                         if obj.CREATE_COHERENCE_POWER_POINT_SUMMARY == 1
+                        %                             % Save figures
+                        %                             figs = [figs;cohFid];
+                        %                             pptFn = strcat(StudyEdfResultDir, edfFNames{f},'.coherence.ppt');
+                        %                             titleStr = sprintf('%s - %s', 'Coherence', edfFNames{f});
+                        %                             imageResolution = imageResolution;
+                        %                             obj.CreateSignalPPT (cohFid, pptFn, titleStr, imageResolution)
+                        %                         end
+                        %
+                        %                         % Close Figures
+                        %                         obj.CloseChildrenFigures;
                     end % Compute coherence
                     
                     % Close figures
                     obj.CloseChildrenFigures;
-                    toc
+             
                 end % For each file
                 
                 %% Dataset summaries
@@ -2525,7 +2611,6 @@ classdef SpectralTrainClass
                     spectralFile = strcat(StudyEdfResultDir, StudySpectrumSummary);
                     xlswrite(spectralFile, spectrumSubjectCell);
                 end
-                
             end
         end
     end
