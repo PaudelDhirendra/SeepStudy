@@ -1,7 +1,8 @@
 classdef SpectralTrainClass
     %SpectralTrainClass Spectral analysis program
     %
-    % Last updated: December 27, 2016 by Sara
+    % Last updated: June 14 2017 by Sara
+    % -- modified fast band for artifact detection to [20 40] Hz
     % -- incorporated cycle analysis
     % -- fixed bugs
     % -- works on Matlab 2015b
@@ -270,7 +271,7 @@ classdef SpectralTrainClass
     % 221 Longwood Ave
     % Boston, MA  02149
     %
-    % Copyright © [2014] The Brigham and Women's Hospital, Inc. THE BRIGHAM AND
+    % Copyright Â© [2014] The Brigham and Women's Hospital, Inc. THE BRIGHAM AND
     % WOMEN'S HOSPITAL, INC. AND ITS AGENTS RETAIN ALL RIGHTS TO THIS SOFTWARE
     % AND ARE MAKING THE SOFTWARE AVAILABLE ONLY FOR SCIENTIFIC RESEARCH
     % PURPOSES. THE SOFTWARE SHALL NOT BE USED FOR ANY OTHER PURPOSES, AND IS
@@ -442,7 +443,7 @@ classdef SpectralTrainClass
         % Artifact Detection
         numMovingAvg30secEpochs = 15;
         deltaBand = [0.6 4.6];
-        betaBand = [40.0 60];
+        betaBand = [20 40];
         swaBand = [0.5 5.5];
     end
     %------------------------------------------------------- Public Methods
