@@ -1,7 +1,8 @@
 classdef SpectralTrainClass
     %SpectralTrainClass Spectral analysis program
     %
-    % Last updated: June 14 2017 by Sara
+    % Last updated: July 17 2017 by Sara
+    % -- fixed an overlapping bug pointed out by Shaun
     % -- modified fast band for artifact detection to [20 40] Hz
     % -- incorporated cycle analysis
     % -- fixed bugs
@@ -1021,7 +1022,9 @@ classdef SpectralTrainClass
                             -dataAvg;...
                             
                         % Compute overall spectrum
-                        noverlapPts = floor(SR*(noverlap*spectralBinWidth - epochWidth)/noverlap);
+                        %noverlapPts = floor(SR*(noverlap*spectralBinWidth - epochWidth)/noverlap);
+                        noverlapPts=floor((noverlap*spectralBinWidth*SR-epochWidth*SR)/(noverlap-1));
+
                         data = reshape(dataZeroed, 1, ...
                             numPtsPer30secEpoch, returnedNum30SecEpochs);
                         data=squeeze(data);
@@ -1082,7 +1085,9 @@ classdef SpectralTrainClass
                             %    -0;...
                             
                             % Compute spectrogram with pwelch method
-                            noverlapPts = floor(SR*(noverlap*spectralBinWidth - epochWidth)/noverlap);
+                            %noverlapPts = floor(SR*(noverlap*spectralBinWidth - epochWidth)/noverlap);
+                            noverlapPts=floor((noverlap*spectralBinWidth*SR-epochWidth*SR)/(noverlap-1));
+
                             signalData = reshape(dataZeroed, 1, ...
                                 numPtsPer30secEpoch, returnedNum30SecEpochs);
                             pwelchF = @(x)pwelchWrap((signalData(:,:,x)),...
