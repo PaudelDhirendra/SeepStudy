@@ -1,7 +1,8 @@
 classdef SpectralTrainClass
     %SpectralTrainClass Spectral analysis program
     %
-    % Last updated: July 17 2017 by Sara
+    % Last updated: October 26 2017 by Sara
+    % -- x axis of figures in hours instead of epochs
     % -- fixed an overlapping bug pointed out by Shaun
     % -- modified fast band for artifact detection to [20 40] Hz
     % -- incorporated cycle analysis
@@ -1535,7 +1536,7 @@ classdef SpectralTrainClass
                             end % Plot Artifact Summary
                             
                             %% Create Figure - Panel (contour, SWA and Hypnogram)
-                            if PLOT_SPECTRAL_SUMMARY == 1;
+                                                        if PLOT_SPECTRAL_SUMMARY == 1;
                                 fid = figure('InvertHardcopy','off','Color',[1 1 1]);
                                 set(fid,'Position', figPos);
                                 figs = [figs;fid];
@@ -1550,9 +1551,11 @@ classdef SpectralTrainClass
                                 pp=pxxEpoch(fIdx,:);
                                 pp(pp<0)=0;
                                 % Plot Data
-                                %                                 scalingFactorForEffect = 4;
+                                %scalingFactorForEffect = 4;
                                 set(gca,'Ydir', 'Reverse');
-                                imagesc(flipud(pp));
+                                 axisVal = [0:freqDisplayInc:freqDisplayMax]';
+                                imagesc([1:size(pxxEpoch,2)]*30/3600, ...
+                                    fIdx,flipud(pxxEpoch(fIdx,:)));
                                 colormap(map);
                                 colorbar;
                                 
@@ -1562,7 +1565,7 @@ classdef SpectralTrainClass
                                 ylabel('Frequency (Hz)','FontWeight','bold','FontSize',fontSize);
                                 
                                 % Add axis labels
-                                axisVal = [0:freqDisplayInc:freqDisplayMax]';
+                               
                                 getIndexF = @(x) find(freq == x);
                                 axisIndex = arrayfun(getIndexF, axisVal, ...
                                     'UniformOutput', 1);
@@ -1592,7 +1595,7 @@ classdef SpectralTrainClass
                                 end
                                 swaSpectrum = sum(swaSpectrum,1);
                                 
-                                plot(epochNum, log10(swaSpectrum), 'LineWidth', plotLineWidth);
+                                plot(epochNum*30/3600, log10(swaSpectrum), 'LineWidth', plotLineWidth);
                                 
                                 % Plot artifacts
                                 v = axis();
@@ -1606,7 +1609,7 @@ classdef SpectralTrainClass
                                     and(plotDeltaArtifactMask, sleepMask');
                                 plotDeltaArtifactIndex = find(plotDeltaArtifactMask);
                                 for l= 1:length(plotDeltaArtifactIndex)
-                                    line([plotDeltaArtifactIndex(l) plotDeltaArtifactIndex(l)], ...
+                                    line([plotDeltaArtifactIndex(l)*30/3600 plotDeltaArtifactIndex(l)*30/3600], ...
                                         [lineStart v(4)], 'color', [1 0 0],...
                                         'LineWidth', artifactLineWidth);
                                 end
@@ -1616,7 +1619,7 @@ classdef SpectralTrainClass
                                     and(plotBetaArtifactMask, sleepMask');
                                 plotBetaArtifactIndex = find(plotBetaArtifactMask);
                                 for l= 1:length(plotBetaArtifactIndex)
-                                    line([plotBetaArtifactIndex(l) plotBetaArtifactIndex(l)], ...
+                                    line([plotBetaArtifactIndex(l)*30/3600 plotBetaArtifactIndex(l)*30/3600], ...
                                         [lineStart v(4)], 'color', [1 0 1],...
                                         'LineWidth', artifactLineWidth);
                                 end
@@ -1626,7 +1629,7 @@ classdef SpectralTrainClass
                                     and(deltaBetaArtifactMask, sleepMask');
                                 deltaBetaArtifactIndex = find(deltaBetaArtifactMask);
                                 for l= 1:length(deltaBetaArtifactIndex)
-                                    line([deltaBetaArtifactIndex(l) deltaBetaArtifactIndex(l)], ...
+                                    line([deltaBetaArtifactIndex(l)*30/3600 deltaBetaArtifactIndex(l)*30/3600], ...
                                         [lineStart v(4)], 'color', [0 0 0],...
                                         'LineWidth', artifactLineWidth);
                                 end
@@ -1645,21 +1648,21 @@ classdef SpectralTrainClass
                                 
                                 %--------------------------------------- Plot Hypnogram
                                 subplot(3,1,3);
-                                plot(numericHypnogram, 'LineWidth', plotLineWidth);
+                                plot([1:length(numericHypnogram)]*30/3600, numericHypnogram, 'LineWidth', plotLineWidth);
                                 
                                 % Change axis
                                 v = axis();
-                                v(2) = length(betaSpectrum);
+                                v(2) = length(betaSpectrum)/3600*30;
                                 v(3:4) = [-2.5 5.5];
                                 axis(v)
                                 
                                 % Add annotations
                                 title('Hypnogram', 'FontWeight','bold','FontSize',fontSize, ...
                                     'Interpreter', 'None');
-                                xlabel('Epoch Number', 'FontWeight','bold','FontSize',fontSize);
+                                xlabel('Time (hours)', 'FontWeight','bold','FontSize',fontSize);
                                 ylabel('Stage', 'FontWeight','bold','FontSize',fontSize);
                                 
-                                % Set x axis
+                                % Set y axis
                                 box(gca,'on');
                                 hold(gca,'all');
                                 set(gca, 'YTick', [-2:1:5]);
@@ -1701,13 +1704,13 @@ classdef SpectralTrainClass
                                 p(3,1).pack('v', {h2/d t/d h2/d t/d []});
                                 
                                 %------------------------------ Title Panel
-                                % Add plot title
-                                titleStr = sprintf('%s - %s - %.0f sec bin - %s Hz', ....
-                                    edfFNames{f}, signalLabels{s}, spectralBinWidth, num2str(freq(2)));
-                                title(titleStr,'FontWeight','bold','FontSize',fontSize*3/2,...
-                                    'Interpreter', 'None');
-                                box off
-                                axis('off');
+%                                 % Add plot title
+%                                 titleStr = sprintf('%s - %s - %.0f sec bin - %s Hz', ....
+%                                     edfFNames{f}, signalLabels{s}, spectralBinWidth, num2str(freq(2)));
+%                                 title(titleStr,'FontWeight','bold','FontSize',fontSize,...
+%                                     'Interpreter', 'None');
+%                                 box off
+%                                 axis('off');
                                 
                                 %------------------------------------ Plot contour plot
                                 % Select active panel frame
@@ -1720,12 +1723,14 @@ classdef SpectralTrainClass
                                 
                                 % Plot Data
                                 set(gca,'Ydir', 'Reverse');
-                                imagesc(flipud(pp));
+                                
+                                imagesc([1:size(pxxEpoch,2)]*30/3600, ...
+                                    fIdx,flipud(pxxEpoch(fIdx,:)));
                                 colormap(map);
-                                % colorbar;
+                                
                                 v = axis;
                                 v(1) = 0;
-                                v(2) = size(pxxEpoch,2);
+                                v(2) = size(pxxEpoch,2)*30/3600;
                                 v(3) = 0;
                                 v(4) = length(fIdx);
                                 vold = v;
@@ -1746,11 +1751,11 @@ classdef SpectralTrainClass
                                 set(gca, 'Layer','top');
                                 set(gca, 'FontWeight','bold');
                                 set(gca, 'FontSize',fontSize);
-                                
+                                axis tight
                                 hold on
                                 % Add wake boundaries
-                                wakeStart = find(wakeMask(1:end-1)<wakeMask(2:end));
-                                wakeEnd = find(wakeMask(1:end-1)>wakeMask(2:end));
+                                wakeStart = find(wakeMask(1:end-1)<wakeMask(2:end))*30/3600;
+                                wakeEnd = find(wakeMask(1:end-1)>wakeMask(2:end))*30/3600;
                                 for l = 1:length(wakeStart)
                                     line([wakeStart(l) wakeStart(l)], [0 length(fIdx)],...
                                         'Color', [1 1 1], 'LineWidth',0.5);
@@ -1792,7 +1797,7 @@ classdef SpectralTrainClass
                                 swaSpectrum = sum(swaSpectrum,1);
                                 
                                 % Plot Slow Wave Activity
-                                plot(epochNum, log10(swaSpectrum), 'LineWidth', plotLineWidth);
+                                plot(epochNum*30/3600, log10(swaSpectrum), 'LineWidth', plotLineWidth);
                                 
                                 % Plot artifacts
                                 v = axis();
@@ -1805,7 +1810,7 @@ classdef SpectralTrainClass
                                     artifact.deltaArtifactMask);
                                 plotDeltaArtifactMask = ...
                                     and(plotDeltaArtifactMask, sleepMask');
-                                plotDeltaArtifactIndex = find(plotDeltaArtifactMask);
+                                plotDeltaArtifactIndex = find(plotDeltaArtifactMask)*30/3600;
                                 for l= 1:length(plotDeltaArtifactIndex)
                                     line([plotDeltaArtifactIndex(l) plotDeltaArtifactIndex(l)], ...
                                         [lineStart v(4)], 'color', [1 0 0],...
@@ -1817,7 +1822,7 @@ classdef SpectralTrainClass
                                     artifact.betaArtifactMask);
                                 plotBetaArtifactMask = ...
                                     and(plotBetaArtifactMask, sleepMask');
-                                plotBetaArtifactIndex = find(plotBetaArtifactMask);
+                                plotBetaArtifactIndex = find(plotBetaArtifactMask)*30/3600;
                                 for l= 1:length(plotBetaArtifactIndex)
                                     line([plotBetaArtifactIndex(l) plotBetaArtifactIndex(l)], ...
                                         [lineStart v(4)], 'color', [1 0 1],...
@@ -1840,7 +1845,7 @@ classdef SpectralTrainClass
                                     'FontSize',fontSize, 'Interpreter', 'None');
                                 yLabelStr = sprintf('log10(Density (%s^2/Hz))', analysisEegUnits);
                                 ylabel(yLabelStr, 'FontWeight','bold','FontSize',fontSize);
-                                xlabel('Epoch Number', 'FontWeight','bold','FontSize',fontSize);
+                                xlabel('Time (hours)', 'FontWeight','bold','FontSize',fontSize);
                                 
                                 % Format Axis
                                 set(gca, 'LineWidth',plotLineWidth);
@@ -1856,11 +1861,11 @@ classdef SpectralTrainClass
                                 p(3,1,3).select();
                                 
                                 % Plot Hypnogram
-                                plot(numericHypnogram, 'LineWidth', plotLineWidth);
+                                plot([1:length(numericHypnogram)]*30/3600,numericHypnogram, 'LineWidth', plotLineWidth);
                                 
                                 % Change axis
                                 v = axis();
-                                v(2) = length(betaSpectrum);
+                                v(2) = length(betaSpectrum)*30/3600;
                                 v(3:4) = [-2.5 5.5];
                                 axis(v)
                                 
@@ -1965,8 +1970,7 @@ classdef SpectralTrainClass
                                     close
                                 end
                                 
-                            end % Plot Comprehensive Spectral Summary Panel
-                            
+                            end % Plot Comprehensive Spectral Summary Panel                           
                             
                             if PLOT_NREM_REM_SPECTRUM == 1
                                 % Create Figure
