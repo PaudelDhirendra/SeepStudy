@@ -1,4 +1,8 @@
 function cleanSigCell=ecgDecont(sigCell,fs,ecg,fsecg,signalLabels)
+% based on the method described in: Nakamura, Masatoshi, and Hiroshi Shibasaki. 
+%"Elimination of EKG artifacts from EEG records: a new method 
+% of non-cephalic referential EEG recording."Electroencephalography 
+% and clinical neurophysiology 66.1 (1987): 89-92.
 ulab=unique(signalLabels);
 rr=PTdetector(ecg,fsecg,0.3);
 % now check the quality of the ECG signal
