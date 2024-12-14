@@ -3,6 +3,7 @@ Getting Started
 
 
 The steps involved in setting up spectral analysis, Sleep Cycle Analysis and Coherence Analysis.
+
 Steps:
 
    1. Download or Clone the Repo.
