@@ -446,6 +446,7 @@ classdef SpectralTrainClass
         numMovingAvg30secEpochs = 15;
         deltaBand = [0.6 4.6];
         betaBand = [20 40];
+        gammaBand = [40 60];
         swaBand = [0.5 5.5];
     end
     %------------------------------------------------------- Public Methods
