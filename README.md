@@ -10,7 +10,7 @@ Steps:
    2. Extract the  EdfXml.7z from Tests Directory to get sleep study EDF file (450002.EDF) and the annotation file (450002.EDF.XML) .
    3. Create a data source and analysis result folder. Place both the EDF file and the annotation file in the data source folder.
    4. Start Matlab. Start MATLAB. Set/navigate the current path to the source code folder or cloned repo directory.
-   5. Start the Interface. Type 'SpectralTrainFig' at the command line or open SpectralTrainFig_App which is updated one for small screens.
+   5. Start the Interface. Type 'SpectralTrainFig' at the command line or open SpectralTrainFig.mlapp which is updated one for small screens.
    6. Select data folder(Can create one in any path. This is the folder where you keep EDF/XML combination).
       Locate the 'Data Folder' text edit field. Select the data folder created by clicking on the elipses (...) to the right of the 'Data Folder text edit field.
    7. Select the result folder(Can create one in any path. This is the folder where results will be written).
