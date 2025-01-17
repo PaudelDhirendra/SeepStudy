@@ -128,7 +128,7 @@ classdef SpectralTrainClass
     %         spectralBinWidth
     %         noverlap
     %         windowFunctionIndex
-    %         maxAnalysisFrequency = 25;
+    %         maxAnalysisFrequency = 45;
     %         bandsOfInterest
     %         bandsOfInterestLabels
     %         bandsOfInterestLatex
@@ -141,7 +141,7 @@ classdef SpectralTrainClass
     %   Figure Parameters
     %         figPos = [-1919, 1, 1920, 1004]: Figure placement during run
     %         map = jet(64): Default contour map
-    %         freqDisplayMax = 25: Maximumum display frequency
+    %         freqDisplayMax = 45: Maximumum display frequency
     %         freqDisplayInc = 5;
     %         folderSeperator = '\';
     %         fontSize = 14;
@@ -897,7 +897,7 @@ classdef SpectralTrainClass
                     numPtsPer30secEpoch = samplingRate*epochWidth;
                     returnedNum30SecEpochs = edfObj.returnedNum30SecEpochs;
                     
-                    % Check that signals are consitantly sampled
+                    % Check that signals are consistantly sampled
                     if length(samplingRate)> 1
                         warnMsg = 'Sampling rate is not constant across channels';
                         warning(warnMsg)
