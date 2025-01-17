@@ -57,7 +57,7 @@ end
 if DEBUG == 1
     % Display parameters
     map = jet(512);
-    freqDisplayMax = 30;
+    freqDisplayMax = 45;
     freqDisplayInc = 5;
     figPos = [-1919, 1, 1920, 1004];
     

@@ -445,8 +445,7 @@ classdef SpectralTrainClass
         % Artifact Detection
         numMovingAvg30secEpochs = 15;
         deltaBand = [0.6 4.6];
-        betaBand = [20 40];
-        gammaBand = [40 60];
+        betaBand = [20 45];
         swaBand = [0.5 5.5];
     end
     %------------------------------------------------------- Public Methods
@@ -2229,13 +2228,13 @@ classdef SpectralTrainClass
                         c(c==0)=[];
                         % create table
                         lab=[{'EEG lead'},{'Cycle #'},{'Start epoch'}, ...
-                            {'End epoch'},labelCell(4:54)];
+                            {'End epoch'},labelCell(4:94)];
                         % for each signal
                         k=1;
                         for kk=1:numAnalysisSignals
                             sppow=pxxCell{kk};
                             artif=artifactCell{kk}.artifactMask;
-                            sppow=sppow(1:51,:);
+                            sppow=sppow(1:91,:);
 %                             band = bandsOfInterest{1}{2};
 %                             bandMask = and(band(1) <= freq, freq <= band(2));
 %                             avg_slow=mean(sppow(find(bandMask),:));
