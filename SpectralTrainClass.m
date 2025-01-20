@@ -2364,6 +2364,8 @@ for kk = 1:numAnalysisSignals
         nrem_band_power = zeros(1, length(band_names));
         rem_band_power_density = zeros(1, length(band_names));
         rem_band_power = zeros(1, length(band_names));
+        total_band_power_density = zeros(1, length(band_names));
+        total_band_power = zeros(1, length(band_names));
         
         % Calculate power density and power for NREM
         if ~isempty(nrem_epochs)
@@ -2387,6 +2389,10 @@ for kk = 1:numAnalysisSignals
             end
         end
         
+        % Calculate total power density and power for the entire cycle (NREM + REM)
+        total_band_power_density = nrem_band_power_density + rem_band_power_density;
+        total_band_power = nrem_band_power + rem_band_power;
+        
         % Store results for NREM
         if ~isempty(nrem_epochs)
             results = [results; ...
@@ -2400,6 +2406,11 @@ for kk = 1:numAnalysisSignals
                 {signalLabels{kk}}, cycle_num, rem_epochs(1), rem_epochs(end), ...
                 'REM', num2cell([rem_band_power_density, rem_band_power])];
         end
+        
+        % Store results for the total cycle (NREM + REM)
+        results = [results; ...
+            {signalLabels{kk}}, cycle_num, cycle_epochs(1), cycle_epochs(end), ...
+            'Total', num2cell([total_band_power_density, total_band_power])];
     end
 end
 
@@ -2407,12 +2418,12 @@ end
 output_table = [headers; results];
 
 % Save results to Excel
-    output_filename = sprintf('%s.cycles.band_analysis.xlsx', edfFNames{f});
-    output_filepath = strcat(StudyEdfResultDir, output_filename); % Add results directory path
-    writetable(cell2table(output_table), output_filepath, 'WriteVariableNames', false);
-   
+output_filename = sprintf('%s.cycles.band_analysis.xlsx', edfFNames{f});
+output_filepath = strcat(StudyEdfResultDir, output_filename); % Add results directory path
+writetable(cell2table(output_table), output_filepath, 'WriteVariableNames', false);
 
-fprintf('Results saved to %s\n', output_filename);
+fprintf('Results saved to %s\n', output_filepath);
+
                     
                     end
                     end
