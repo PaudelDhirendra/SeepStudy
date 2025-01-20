@@ -2287,7 +2287,132 @@ classdef SpectralTrainClass
                                 xlswrite(specCyclesXlsFn, cyclesOut);
                                 fprintf('\t\t%.0f. %s\n', s, specCyclesXlsFn);
  
-  
+% Define frequency bands
+bandsforcycle = struct(...
+    'slow_oscillation', [0.5, 1], ...  % Slow oscillation (SO)
+    'delta', [0.5, 4], ...             % Delta
+    'theta', [4, 8], ...               % Theta
+    'alpha', [8, 12], ...              % Alpha
+    'sigma', [12, 15], ...             % Sigma (spindle range)
+    'beta', [15, 30], ...              % Beta
+    'gamma', [30, 45] ...              % Gamma
+);
+
+% Extract band names and ranges
+band_names = fieldnames(bandsforcycle);
+band_ranges = struct2cell(bandsforcycle);
+
+% Calculate frequency resolution
+sampling_rate = unique(edfObj.sample_rate); % Sampling rate in Hz
+num_freq_bins = size(pxxCell{1}, 1); % Number of frequency bins in the PSD
+fft_points = (num_freq_bins - 1) * 2; % Infer FFT size
+df = sampling_rate / fft_points; % Frequency resolution in Hz
+
+% Identify sleep cycles
+cycles = sleep_cycles(numericHypnogram);
+c = unique(cycles);
+c(c == 0) = []; % Remove cycle number 0 (if any)
+
+% Check for empty cycles
+if isempty(c)
+    warning('No valid sleep cycles found. Skipping analysis.');
+    return;
+end
+
+% Prepare table headers
+headers = [{'EEG Lead'}, {'Cycle #'}, {'Start Epoch'}, {'End Epoch'}, ...
+    {'Sleep Stage'}];
+for b = 1:length(band_names)
+    headers = [headers, sprintf('%s_PowerDensity (uV²/Hz)', band_names{b})];
+end
+for b = 1:length(band_names)
+    headers = [headers, sprintf('%s_Power (uV²)', band_names{b})];
+end
+
+% Initialize results table
+results = [];
+
+% Loop through each EEG signal
+for kk = 1:numAnalysisSignals
+    % Check if pxxCell and artifactCell are valid
+    if isempty(pxxCell{kk}) || isempty(artifactCell{kk})
+        warning('Empty PSD or artifact data for signal %d. Skipping.', kk);
+        continue;
+    end
+
+    sppow = pxxCell{kk}; % Power spectral density
+    artif = artifactCell{kk}.artifactMask; % Artifact mask
+    
+    % Loop through each sleep cycle
+    for jj = 1:length(c)
+        cycle_num = c(jj);
+        cycle_epochs = find(cycles == cycle_num); % Epochs in the current cycle
+        cycle_stages = numericHypnogram(cycle_epochs); % Sleep stages in the cycle
+        
+        % Separate NREM and REM epochs
+        nrem_epochs = cycle_epochs(ismember(cycle_stages, [2, 3, 4])); % NREM stages
+        rem_epochs = cycle_epochs(cycle_stages == 5); % REM stage
+        
+        % Check for empty NREM or REM epochs
+        if isempty(nrem_epochs) && isempty(rem_epochs)
+            warning('No NREM or REM epochs found in cycle %d. Skipping.', cycle_num);
+            continue;
+        end
+
+        % Initialize power density and power for the current cycle
+        nrem_band_power_density = zeros(1, length(band_names));
+        nrem_band_power = zeros(1, length(band_names));
+        rem_band_power_density = zeros(1, length(band_names));
+        rem_band_power = zeros(1, length(band_names));
+        
+        % Calculate power density and power for NREM
+        if ~isempty(nrem_epochs)
+            for b = 1:length(band_names)
+                band_range = band_ranges{b};
+                band_mask = and(freq >= band_range(1), freq <= band_range(2)); % Frequency mask
+                nrem_power = sppow(band_mask, nrem_epochs); % PSD for NREM epochs
+                nrem_band_power_density(b) = mean(nrem_power(:)); % Mean power density
+                nrem_band_power(b) = nrem_band_power_density(b) * df * sum(band_mask); % Convert to power
+            end
+        end
+        
+        % Calculate power density and power for REM
+        if ~isempty(rem_epochs)
+            for b = 1:length(band_names)
+                band_range = band_ranges{b};
+                band_mask = and(freq >= band_range(1), freq <= band_range(2)); % Frequency mask
+                rem_power = sppow(band_mask, rem_epochs); % PSD for REM epochs
+                rem_band_power_density(b) = mean(rem_power(:)); % Mean power density
+                rem_band_power(b) = rem_band_power_density(b) * df * sum(band_mask); % Convert to power
+            end
+        end
+        
+        % Store results for NREM
+        if ~isempty(nrem_epochs)
+            results = [results; ...
+                {signalLabels{kk}}, cycle_num, nrem_epochs(1), nrem_epochs(end), ...
+                'NREM', num2cell([nrem_band_power_density, nrem_band_power])];
+        end
+        
+        % Store results for REM
+        if ~isempty(rem_epochs)
+            results = [results; ...
+                {signalLabels{kk}}, cycle_num, rem_epochs(1), rem_epochs(end), ...
+                'REM', num2cell([rem_band_power_density, rem_band_power])];
+        end
+    end
+end
+
+% Add headers to the results table
+output_table = [headers; results];
+
+% Save results to Excel
+    output_filename = sprintf('%s.cycles.band_analysis.xlsx', edfFNames{f});
+    output_filepath = strcat(StudyEdfResultDir, output_filename); % Add results directory path
+    writetable(cell2table(output_table), output_filepath, 'WriteVariableNames', false);
+   
+
+fprintf('Results saved to %s\n', output_filename);
                     
                     end
                     end
