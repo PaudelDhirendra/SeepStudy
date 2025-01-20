@@ -2286,6 +2286,9 @@ classdef SpectralTrainClass
                                     strcat(StudyEdfResultDir, specCyclesXlsFn);
                                 xlswrite(specCyclesXlsFn, cyclesOut);
                                 fprintf('\t\t%.0f. %s\n', s, specCyclesXlsFn);
+ 
+  
+                    
                     end
                     end
                     %obj.CloseChildrenFigures;
