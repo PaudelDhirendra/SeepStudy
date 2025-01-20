@@ -2507,6 +2507,66 @@ classdef SpectralTrainClass
                         %
                         %                         % Close Figures
                         %                         obj.CloseChildrenFigures;
+                   
+
+                        %% Add Band-Wise Coherence Summary
+% Define bands of interest
+bandsForCoherence = {
+    'Slow Oscillation', [0.5, 1];
+    'Delta', [1, 4];
+    'Theta', [4, 8];
+    'Alpha', [8, 12];
+    'Sigma', [12, 15];
+    'Beta', [15, 30];
+    'Gamma', [30, 45];
+};
+numBands = size(bandsForCoherence, 1);
+
+% Initialize variables for band coherence summary
+bandCohSummary = [];  % To store coherence values
+bandLabels = {};      % Band labels
+signalPairLabels = {}; % Signal pair labels
+
+% Compute coherence for each signal pair
+for c = 1:numPermCompute
+    % Get coherence data for the current signal pair
+    CxyEpoch = CxyCell{c};
+    
+    % Loop through each band of interest
+    for boi = 1:numBands
+        % Get band frequency range
+        band = bandsForCoherence{boi, 2};  % Correct: Use parentheses indexing
+        bandMask = and(Freq >= band(1), Freq <= band(2));
+        
+        % Extract coherence values for the band
+        bandCoh = mean(CxyEpoch(bandMask, :), 1);
+        
+        % Calculate average coherence for each sleep stage
+        sleepCoh = mean(bandCoh(sleepMask));
+        nremCoh = mean(bandCoh(nremMask));
+        remCoh = mean(bandCoh(remMask));
+        
+        % Store results
+        bandCohSummary = [bandCohSummary; sleepCoh, nremCoh, remCoh];
+        bandLabels = [bandLabels; bandsForCoherence{boi, 1}];
+        signalPairLabels = [signalPairLabels; ...
+            {[signalLabels{signalPerm(c,1)}, ' - ', signalLabels{signalPerm(c,2)}]}];
+    end
+end
+
+% Create Band Coherence Summary Table
+bandCohTable = [{'Signal Pair', 'Band', 'Sleep Coherence', 'NREM Coherence', 'REM Coherence'}; ...
+    [signalPairLabels, bandLabels, num2cell(bandCohSummary)]];
+
+% Export Band Coherence Summary to Excel
+bandCohFn = strcat(StudyEdfResultDir, edfFNames{f}, '.coherence.band.summary.xlsx');
+xlswrite(bandCohFn, bandCohTable);
+
+% Echo status to console
+fprintf('\tBand coherence summary written to: %s\n', bandCohFn);
+                    
+                    
+                    
                     end % Compute coherence
                     
                     % Close figures
