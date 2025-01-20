@@ -2389,9 +2389,14 @@ for kk = 1:numAnalysisSignals
             end
         end
         
-        % Calculate total power density and power for the entire cycle (NREM + REM)
-        total_band_power_density = nrem_band_power_density + rem_band_power_density;
-        total_band_power = nrem_band_power + rem_band_power;
+        % Calculate total power density and power for the entire cycle (all epochs)
+        for b = 1:length(band_names)
+            band_range = band_ranges{b};
+            band_mask = and(freq >= band_range(1), freq <= band_range(2)); % Frequency mask
+            total_power = sppow(band_mask, cycle_epochs); % PSD for all epochs in the cycle
+            total_band_power_density(b) = mean(total_power(:)); % Mean power density
+            total_band_power(b) = total_band_power_density(b) * df * sum(band_mask); % Convert to power
+        end
         
         % Store results for NREM
         if ~isempty(nrem_epochs)
@@ -2407,7 +2412,7 @@ for kk = 1:numAnalysisSignals
                 'REM', num2cell([rem_band_power_density, rem_band_power])];
         end
         
-        % Store results for the total cycle (NREM + REM)
+        % Store results for the total cycle (all epochs)
         results = [results; ...
             {signalLabels{kk}}, cycle_num, cycle_epochs(1), cycle_epochs(end), ...
             'Total', num2cell([total_band_power_density, total_band_power])];
