@@ -94,7 +94,7 @@ Using relatively simple artifact detection requires an explicit trade in spectra
 Dozens of researchers, computer scientists, enginginners, technicians and research assistants assisted in the development of this program.
 
 SleepStudy uses several utilities available from the MATLAB file exchange area including:
--    [SpectralTrainFig](https://www.mathworks.com/matlabcentral/fileexchange/49852-spectraltrainfig)[source code](https://github.com/nsrr/SpectralTrainFig). The main app and source code from which this repo is forked.
+-    [SpectralTrainFig](https://www.mathworks.com/matlabcentral/fileexchange/49852-spectraltrainfig) & [source code](https://github.com/nsrr/SpectralTrainFig). The main app and source code from which this repo is forked.
 -    [dirr](http://www.mathworks.com/matlabcentral/fileexchange/8682-dirr--find-files-recursively-filtering-name--date-or-bytes-) Used to create EDF/XMl file lists for processing
 -    [moving](http://www.mathworks.com/matlabcentral/fileexchange/8251-moving-averages---moving-median-etc). Used to compute running band averages for the artifact detection computations.
 -    [panel](http://www.mathworks.com/matlabcentral/fileexchange/20003-panel). Used to create a summary figure for review.
