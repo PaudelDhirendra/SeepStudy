@@ -1,11 +1,12 @@
-Getting Started
+SleepStudy
 ================
 
+#### Overview
+SleepStudy is a fork of [SpectralTrainFig](https://github.com/nsrr/SpectralTrainFig) repo. The original readme from SpectralTrainFig is available [here](https://github.com/PaudelDhirendra/SleepStudy/blob/master/README_SpectralTrainFig.md). SleepStudy is a graphical user interface that allows a user to select a folder of [EDF](http://en.wikipedia.org/wiki/European_Data_Format)/XML files to apply [Spectral Analysis](http://en.wikipedia.org/wiki/Spectral_estimation), [Coherence Analysis](https://en.wikipedia.org/wiki/Coherence_(signal_processing)) and [Sleep Cycle Analysis](https://en.wikipedia.org/wiki/Sleep_cycle) to [electroencephlography signals (EEG)](http://en.wikipedia.org/wiki/Electroencephalography). The program includes a spectral threshold artifact detection scheme described in the [literature](http://www.ncbi.nlm.nih.gov/pubmed/16388912). And a template-subtraction based ECG artifact removal algorithm. SpectralTrainFig is a user friendly approach to the SpectralAnalysisClass function. The GUI versions allows a user to perform spectral or coherence analysis without having to do any programming. EXCEL and PowerPoint summaries are configured by user defined settings and specified spectral bands. Detail epoch by epoch and subject summaries are provided for both NREM and REM states. Additional details are described below. 
 
+#### Getting Started
 The steps involved in setting up spectral analysis, Sleep Cycle Analysis and Coherence Analysis.
-
 Steps:
-
    1. Download or Clone the Repo.
    2. Extract the  EdfXml.7z from Tests Directory to get sleep study EDF file (450002.EDF) and the annotation file (450002.EDF.XML) .
    3. Create a data source and analysis result folder. Place both the EDF file and the annotation file in the data source folder.
@@ -16,12 +17,6 @@ Steps:
    7. Select the result folder(Can create one in any path. This is the folder where results will be written).
       Locate the 'Results Folder' text edit field. Select the result folder created by clicking on the elipse (...) to the right of the 'Result Folder' text edit field.
    8. Start the analysis. Click on the button labeled 'Go(all)' which is located at the bottom of the graphical user interface.
-
-SleepStudy
-================
-
-#### Overview
-SleepStudy is a fork of [SpectralTrainFig](https://github.com/nsrr/SpectralTrainFig) repo. The original readme from SpectralTrainFig is available [here](https://github.com/PaudelDhirendra/SleepStudy/blob/master/README_SpectralTrainFig.md). SleepStudy is a graphical user interface that allows a user to select a folder of [EDF](http://en.wikipedia.org/wiki/European_Data_Format)/XML files to apply [Spectral Analysis](http://en.wikipedia.org/wiki/Spectral_estimation), Coherence Analysis and Sleep Cycle Analysis to [electroencephlography signals (EEG)](http://en.wikipedia.org/wiki/Electroencephalography). The spectral analysis program includes a spectral threshold artifact detection scheme described in the [literature](http://www.ncbi.nlm.nih.gov/pubmed/16388912). And a template-subtraction based ECG artifact removal algorithm. SpectralTrainFig is a user friendly approach to the SpectralAnalysisClass function. The GUI versions allows a user to perform spectral or coherence analysis without having to do any programming. EXCEL and PowerPoint summaries are configured by user defined settings and specified spectral bands. Detail epoch by epoch and subject summaries are provided for both NREM and REM states. Additional details are described below. 
 
 ### Parameters
 
